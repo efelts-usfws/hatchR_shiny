@@ -24,6 +24,10 @@ conflicts_prefer(DT::renderDT,
 
 crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
 
+# make sure model table is in the workspace from hatchR package
+
+data("model_table")
+
 # Make a link to the hatchR github page
 
 link_gh <- tags$a(shiny::icon("github"), "hatchR Package", href = "https://bmait101.github.io/hatchR/index.html", target = "_blank")
@@ -251,10 +255,15 @@ ui <- page_navbar(
 
 server <- function(input,output,session){
   
+  #bs_themer()
+  
+  
+  
   # Make a reactive selectInput for identifying the date column
   
   output$date_column <- renderUI({
     
+    req(input$upload)
     
     file <- input$upload
     
@@ -262,17 +271,10 @@ server <- function(input,output,session){
     
     data <- read_csv(file$datapath)
     
-    req(input$demo_check)
+    selectInput(inputId = "date.column",
+                label="Identify which column dates are in",
+                choices=colnames(data))
     
-    
-    if(input$demo_check==FALSE)
-      
-      return(
-        
-        selectInput(inputId = "date.column",
-                    label="Identify which column dates are in",
-                    choices=colnames(data))
-      )
     
   })
   
@@ -280,7 +282,7 @@ server <- function(input,output,session){
   
   output$temp_column <- renderUI({
     
-    # req(input$upload)
+    req(input$upload)
     
     file <- input$upload
     
@@ -288,17 +290,10 @@ server <- function(input,output,session){
     
     data <- read_csv(file$datapath)
     
-    req(input$demo_check)
+    selectInput(inputId = "temp.column",
+                label="Identify which column temperatures are in",
+                choices=colnames(data))
     
-    if(input$demo_check==FALSE)
-      
-      return(
-        
-        selectInput(inputId = "temp.column",
-                    label="Identify which column temperatures are in",
-                    choices=colnames(data))
-        
-      )
     
   })
   
@@ -312,11 +307,17 @@ server <- function(input,output,session){
     # req(input$date.column)
     # req(input$temp.column)
     
-    req(input$demo_check)
+    # req(input$demo_check)
     
     file <- input$upload
     
     ext <- tools::file_ext(file$datapath)
+    
+    if(input$demo_check==FALSE){
+      req(input$date.column)
+      req(input$temp.column)
+      req(input$upload)
+    }
     
     # req(file)
     
@@ -335,37 +336,37 @@ server <- function(input,output,session){
           filter(!is.na(date))
         
       )
-    #
-    # if(input$date.format == "1/1/2000"&
-    #    input$demo_check==FALSE)
-    #
-    #   return(
-    #
-    #     read_csv(file$datapath) %>%
-    #       rename(date=input$date.column,
-    #              temperature=input$temp.column) %>%
-    #       mutate(date=mdy(date)) %>%
-    #       group_by(date) %>%
-    #       summarize(daily_temp=mean(temperature)) %>%
-    #       filter(!is.na(date))
-    #
-    #   )
-    #
-    # if(input$date.format == "2000-01-01"&
-    #    input$demo_check==FALSE)
-    #
-    #   return(
-    #
-    #     read_csv(file$datapath) %>%
-    #       rename(date=input$date.column,
-    #              temperature=input$temp.column) %>%
-    #       mutate(date=as.character(date)) %>%
-    #       mutate(date=as_date(date)) %>%
-    #       group_by(date) %>%
-    #       summarize(daily_temp=mean(temperature))%>%
-    #       filter(!is.na(date))
-    #
-    #   )
+    
+    if(input$date.format == "1/1/2000"&&
+       input$demo_check==FALSE)
+      
+      return(
+        
+        read_csv(file$datapath) %>%
+          rename(date=input$date.column,
+                 temperature=input$temp.column) %>%
+          mutate(date=mdy(date)) %>%
+          group_by(date) %>%
+          summarize(daily_temp=mean(temperature)) %>%
+          filter(!is.na(date))
+        
+      )
+    
+    if(input$date.format == "2000-01-01"&&
+       input$demo_check==FALSE)
+      
+      return(
+        
+        read_csv(file$datapath) %>%
+          rename(date=input$date.column,
+                 temperature=input$temp.column) %>%
+          mutate(date=as.character(date)) %>%
+          mutate(date=as_date(date)) %>%
+          group_by(date) %>%
+          summarize(daily_temp=mean(temperature))%>%
+          filter(!is.na(date))
+        
+      )
     
     
     if(input$demo_check==TRUE)
@@ -389,6 +390,8 @@ server <- function(input,output,session){
   # return the user provided csv file in a DataTable output
   
   output$user.dat <- renderDT({
+    
+    req(data_reactive())
     
     withProgress(message="Making Table",data_reactive())
     
@@ -658,7 +661,7 @@ server <- function(input,output,session){
   
   output$spawn_date <- renderUI({
     
-    req(input$upload)
+    # req(input$upload)
     
     user_dat <- data_reactive()
     
@@ -749,7 +752,7 @@ server <- function(input,output,session){
   
   eval_reactive <- reactive({
     
-    req(input$upload)
+    # req(input$upload)
     req(input$spawn_date)
     # req(input$model_species)
     # req(input$model_author)
@@ -1014,7 +1017,7 @@ server <- function(input,output,session){
                        color=phase),linewidth=2)+
       geom_line(data=temp.limited,
                 aes(x=date,y=daily_temp,group=group,
-                    text=str_c("Date:",date,
+                    text=str_c(" Date:",date,
                                "<br>","Temperature:",round(daily_temp,1),sep=" ")))+
       scale_color_manual(values=c("blue",
                                   "red"))+
