@@ -50,7 +50,7 @@ hatchr_bib <- BibEntry("Unpublished",
                                              family = "Felts",
                                              email = "eli_felts@fws.gov")
                        ),
-                       year       = "2024",
+                       year       = "2025",
                        note       = "In preparation")
 
 
