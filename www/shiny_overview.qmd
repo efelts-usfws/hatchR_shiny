@@ -1,0 +1,63 @@
+---
+title: "How to use this app"
+format: 
+  html:
+    toc: true
+editor: visual
+theme: cyborg
+---
+
+## Overview
+
+This app is designed to take users through the process of uploading data into the R session, error checking those data, then implementing one or multiple models to estimate hatch and/or emergence timing. These models are implemented using the hatchR package - for more details about this package visit the hatchR Package GitHub page that is linked under the Links tab of this page.
+
+The import and error checking process occurs on the "Import Data" page that can be accessed from the menu at the top of this page. Model specification and implementation occur on the "Model Phenology" page.
+
+You can toggle back and forth between this instructional page and the other pages without losing your work.
+
+### Import Data Page
+
+Data used in predicting phenology will consist of dates and temperatures. Temperatures are expected to be in Celsius. Input files must be formatted as a csv file with column names in the first row. There can be additional columns besides date and temperature. To upload a dataset click the "Browse" button under the "Upload temperature data" menu. Find the csv file to be analyzed and click "open". You should see a prompt that says "Upload complete". In the first 2 drop down menus the options will list all named columns in the file that was uploaded: specify which column in the uploaded csv file corresponds to date and temperature values, respectively.
+
+Once the date and temperature columns are specified, a table under the header "Input Data" will appear with "date" and "daily temp". If there are values in there, the dates were matched to the default format (m/d/yyy) and you are ready to move on. If there is a message in the table that says "No data available in table" you need to select the appropriate date format.
+
+There is another table under the header "Missing Dates" which will check to see if there are any days missing in your data set, as hatchR expects continuous daily temperature data. If this table reads "No data available in table" there are no missing dates, otherwise it will show any dates in the provided time series that did not have a temperature value.
+
+As soon as the correct date format is selected a temperature check plot will appear. To see an expanded view of the plot, hover over the plot and a button will appear in the bottom right corner - click this to see a full screen view of the plot. Also, note that if you hover over values on the plot the date and temperature will appear in a dialog box. There are a couple of things to check for in the temperature check plot:
+
+1.  Are there extreme negative values in the data set? This is a common occurrence if temperature loggers end up being out of the water during winter, and can cause issues with modeling phenology.
+2.  When does the data set end? If you try to model phenology too close to the end of your data set, the fish may not achieve the model end points (i.e. hatch and/or emerge) simply because the data set ends.
+
+Note that that the models used to predict hatch and emergence timing expect input values of daily average temperature. If your data already exist in that format, they will not change; if they originally had multiple readings per day they will automatically be summarized to a daily average.
+
+### Model Phenology Page
+
+On this page you will be able to specify a model that is specific to a species, development stage (hatch or emergence). The default is to use existing models with equations included in the hatchR package. We'll first describe here how to implement those models, then provide instructions for custom models.
+
+#### Existing Models
+
+The first input to choose is the species. For species with multiple published equations there will also be options to choose different models for the species by selecting different authors and the various models from that publication. Once the model is specified, choose a spawn date, or dates. This menu will default to the latest dates in the input file, and will not allow selection of dates that are not included in the temperature data set.
+
+Multiple spawn dates may be selected. If you want to clear all selections there is a "Clear" button at the bottom of the calendar menu. If you just want to remove a single selection, hold the "Ctrl" key and click on the date you want to remove. Once you select dates the model will be run and summary results will show up in the Phenology Summaries table; a plot of the timeline from spawn date to hatch and/or emergence will also show up in the Timeline Plot. Both the table and the plot have the option to expand to a full screen view by hovering over them and clicking the "Expand" button that appears in the bottom right corner.
+
+Model summaries may be downloaded in a csv format by clicking "Download model summary data" at the bottom of the screen. Note that the output file includes more information than what is displayed within the app; specifically, the model specifications including species, author, model id, and the functions used to model hatch and emerge. The full accumulation of daily thermal values may also be downloaded by clicking "Download daily accumulation values", which can be used in additional plots as suggested in the hatchR package vignettes.
+
+Note that it is possible to pick a spawn date that will be too close to the end of the data set to allow estimation of hatch and/or emergence date. This will be indicated in the "message" column of the Phenology Summaries. Additionally, in the timeline plot you will only see the blue (Egg) phase if hatch was estimated but emergence wasn't achieved. If neither are achieved, that particular model run won't show up on the plot, but will be in the summary table.
+
+The plot also has popup options if you hover your mouse over object on the plot. The daily temperatures will popup if the mouse is over that line, and the phenology summaries will popup if the mouse is hovered over the far left of the timeline bar.
+
+A static ".png" version of the plot may be downloaded by clicking the download button below the plot.
+
+If one or both phases aren't achieved, the message in the summary table will ask if the fish spawned too close to the end of your data. The most common reason for not reaching a hatch or emergence is because the uploaded temperature data end before the fish have accumulated enough thermal units to reach their given end point. However, there are other reasons this may occur, such as extreme negative values in the temperature data. These types of outliers can be identified by examining the Plot Temperature Check plot on the Import Data tab.
+
+#### Custom Models
+
+To implement custom models, the Import Data steps are the same. On the Model Phenology page, choose Custom model in the sidebar options. This will change the other options on the sidebar. Now there will be an option to upload data to build a custom model. The input file should be in csv format and have a column for temperature (in Celsius) and for the number of days to the given endpoint. A text box will appear asking which species is being described in the custom model, and there will be a drop down menu to select which development stage (hatch or emerge) the custom model is for. You will also be asked to identify which columns "temperature" and "days" are in, respectively. Once these options are set, the model will be created, and spawn dates can be selected to predict phenology, and all options for exploring and downloading outputs will be the same as with existing models.
+
+### Citing hatchR
+
+Please cite the hatchR package if you use this app and/or the package itself in your work. You can find suggestions for how to cite the package on the Authors and Citation page of this app, or on the hatchR citation page that is linked under the Links tab of this page. There is a button on the Authors and Citation page where you can download the BibTex citation formatted file for the hatchR citation; that file can be directly imported directly into citation software that uses BibTex formatting such as Zotero, or may be opened as a text file if necessary.
+
+### USDA/USFWS Disclaimer
+
+`hatchR` project code is provided on an “as is” basis and the user assumes responsibility for its use. USDA Forest Service and U.S Fish & Wildlife Service has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by USDA Forest Service or U.S. Fish & Wildlife Service.

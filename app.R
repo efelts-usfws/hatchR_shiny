@@ -10,15 +10,15 @@ library(markdown)
 library(plotly)
 library(RefManageR)
 library(pak)
-
+library(hatchR)
 
 conflicts_prefer(DT::renderDT,
                  dplyr::filter,
                  dplyr::lag)
 
-pak("bmait101/hatchR")
+# Bring in the example crooked river data set
 
-library(hatchR)
+crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
 
 # Make a link to the hatchR github page
 
@@ -85,9 +85,6 @@ ui <- page_navbar(
                                                    accept = ".csv")
                                          
                                        ),
-                                       
-                                       # fileInput("upload","Upload daily temperature data",
-                                       #           accept = ".csv"),
                                        
                                        # Reactive UI element for users to identify which column
                                        # their date data are in
@@ -179,7 +176,6 @@ ui <- page_navbar(
   #nav_spacer(),
   
   nav_panel("About",
-            # includeMarkdown("shiny_overview.qmd")
             
             tags$iframe(src="shiny_overview.html",
                         width="100%",
