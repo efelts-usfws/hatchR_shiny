@@ -21,10 +21,6 @@ theme: cyborg
 ```{r echo=FALSE, warning=FALSE}
 
 library(shiny)
-library(rbibutils)
-library(downloadthis)
-library(RefManageR)
-
 ```
 
 ## Citation

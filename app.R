@@ -4,12 +4,8 @@ library(bslib)
 library(DT)
 library(shinyWidgets)
 library(conflicted)
-library(markdown)
 library(plotly)
-library(RefManageR)
 library(hatchR)
-library(rbibutils)
-library(downloadthis)
 library(RefManageR)
 
 
