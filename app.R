@@ -254,11 +254,7 @@ ui <- page_navbar(
 # Make the server
 
 server <- function(input,output,session){
-  
-  #bs_themer()
-  
-  
-  
+
   # Make a reactive selectInput for identifying the date column
   
   output$date_column <- renderUI({
@@ -301,14 +297,7 @@ server <- function(input,output,session){
   # go into everything else on the server side
   
   data_reactive <- reactive({
-    
-    # req(input$date.format)
-    # req(input$upload)
-    # req(input$date.column)
-    # req(input$temp.column)
-    
-    # req(input$demo_check)
-    
+
     file <- input$upload
     
     ext <- tools::file_ext(file$datapath)
@@ -318,8 +307,6 @@ server <- function(input,output,session){
       req(input$temp.column)
       req(input$upload)
     }
-    
-    # req(file)
     
     if(input$date.format == "2000-01-01T00:00:00Z"&&
        input$demo_check==FALSE)
@@ -430,9 +417,6 @@ server <- function(input,output,session){
   
   temp_check_reactive <- reactive({
     
-    # req(input$upload)
-    # req(input$date.format)
-    
     dat <- data_reactive() %>%
       mutate(group=1)
     
@@ -457,22 +441,6 @@ server <- function(input,output,session){
   # Run the plot_check_temp function
   
   output$temp_plot <- renderPlotly({
-    
-    # req(input$upload)
-    # req(input$date.format)
-    #
-    # file <- input$upload
-    #
-    # ext <- tools::file_ext(file$datapath)
-    #
-    # req(file)
-    #
-    # dat <- data_reactive()
-    #
-    # plot1 <- plot_check_temp(data=dat, dates=date,
-    #                          temperature=daily_temp)
-    #
-    # ggplotly(plot1)
     
     plot1 <- temp_check_reactive()
     
@@ -661,8 +629,6 @@ server <- function(input,output,session){
   
   output$spawn_date <- renderUI({
     
-    # req(input$upload)
-    
     user_dat <- data_reactive()
     
     airDatepickerInput(inputId = "spawn_date",
@@ -703,9 +669,6 @@ server <- function(input,output,session){
   
   model_custom <- reactive({
     
-    # req(input$custom_upload)
-    # req(input$customtemp.column)
-    # req(input$customdays.column)
     req(input$custom_species)
     req(input$custom_stage)
     
@@ -752,11 +715,7 @@ server <- function(input,output,session){
   
   eval_reactive <- reactive({
     
-    # req(input$upload)
     req(input$spawn_date)
-    # req(input$model_species)
-    # req(input$model_author)
-    # req(input$model_id)
     
     selected_models <- model_reactive()
     model.dat <- data_reactive()
@@ -1026,12 +985,7 @@ server <- function(input,output,session){
                  ncol=1)+
       labs(x="Date",y="Temperature (C)",
            color="")
-    
-    
-    
-    
-    
-    
+
   })
   
   # render plot for display in the shiny app
@@ -1067,8 +1021,6 @@ server <- function(input,output,session){
       req(daily_reactive())
       write.csv(daily_reactive(),file,row.names=F)
     })
-  
-  
   
   # Put the plot into a png to go into the download handler
   
