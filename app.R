@@ -14,12 +14,21 @@ conflicts_prefer(DT::renderDT,
                  dplyr::lag)
 
 # Bring in the example crooked river data set
+# 
+# crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
 
-crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
+
 
 # make sure model table is in the workspace from hatchR package
 
 data("model_table")
+
+data("crooked_river")
+
+crooked.dat <- crooked_river %>% 
+  rename(SampleDate=date,
+         temperature=temp_c) %>% 
+  filter(!SampleDate==as_date("2011-09-13"))
 
 # Make a link to the hatchR github page
 
