@@ -1,3 +1,22 @@
+# check that necessary packages are installed, if not
+# install them
+
+required_packages <- c("tidyverse","shiny","bslib","DT",
+                       "shinyWidgets","conflicted","plotly",
+                       "hatchR","RefManageR")
+
+installed_packages <- rownames(installed.packages())
+
+for(pkg in required_packages){
+  
+  if (!pkg %in% installed_packages){
+    
+    install.packages(pkg)
+    
+  }
+}
+
+
 library(tidyverse)
 library(shiny)
 library(bslib)
