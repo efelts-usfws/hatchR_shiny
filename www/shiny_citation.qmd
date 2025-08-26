@@ -16,37 +16,20 @@ author:
 format: html
 editor: visual
 theme: cyborg
+bibliography: hatchr.bib
+csl: felts-custom.csl
 ---
 
 ```{r echo=FALSE, warning=FALSE}
 
 library(shiny)
-```
-
-## Citation
-
-```{r echo=FALSE}
-bibentry(
-  
-  bibtype    = "Unpublished",
-  title      = "{hatchR}: predicting fish developmental phenology",
-  author     = c(person(given  = "Bryan M.",
-                        family = "Maitland",
-                        email  = "bryan.maitland@usda.gov"),
-                 person(given  = "Morgan R.",
-                        family = "Sparks"),
-                 person(given  = "Eli",
-                        family = "Felts",
-                        email = "eli_felts@fws.gov")
-                        ),
-  year       = "2025",
-  note       = "In preparation"
-  
-)
-
-
+library(RefManageR)
 ```
 
 ## Shiny App Feedback
 
 This application was authored and is maintained by Eli Felts. Send bug reports and feature requests to eli_felts\@fws.gov.
+
+## Citation
+
+When citing hatchR please use our Fisheries manuscript [@sparks2025]:

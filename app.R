@@ -59,21 +59,28 @@ link_citation <- tags$a(shiny::icon("link"),"hatchR Citation",href = "https://bm
 
 # Make the bibtext object for hatchR
 
-hatchr_bib <- BibEntry("Unpublished",
-                       title="{hatchR}: predicting fish developmental phenology",
-                       
-                       author     = c(person(given  = "Bryan M.",
-                                             family = "Maitland",
-                                             email  = "bryan.maitland@usda.gov"),
-                                      person(given  = "Morgan R.",
-                                             family = "Sparks"),
-                                      person(given  = "Eli",
-                                             family = "Felts",
-                                             email = "eli_felts@fws.gov")
-                       ),
-                       year       = "2025",
-                       note       = "In preparation")
+# hatchr_bib <- BibEntry(bibtype="Article",
+#                        title="{hatchR}: A toolset to predict when fish hatch and emerge",
+#                        
+#                        author=c(person(given  = "Morgan M.",
+#                                 family = "Sparks",
+#                                 email = "morgan.sparks@usda.gov"),
+#                          person(given  = "Bryan M.",
+#                                 family = "Maitland"),
+#                          person(given  = "Eli",
+#                                 family = "Felts",
+#                                 email = "eli_felts@fws.gov"),
+#                          person(given="Allison G.",
+#                                 family="Swartz"),
+#                          person(given="Paul N.",
+#                                 family="Frater")
+#                        ),
+#                        journal="Fisheries",
+#                        year       = "2025")
 
+# read in the bibtex object that mirrors the DOI entry
+
+hatchr_bib <- ReadBib("hatchr.bib")
 
 # make the UI
 

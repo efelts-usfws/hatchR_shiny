@@ -23,7 +23,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="shiny_citation_files/libs/clipboard/clipboard.min.js"></script>
@@ -94,21 +114,21 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="citation" class="level2">
-<h2 class="anchored" data-anchor-id="citation">Citation</h2>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>Maitland B, Sparks M, Felts E (2025). "hatchR: predicting fish
-developmental phenology." In preparation.</code></pre>
-</div>
-</div>
-</section>
 <section id="shiny-app-feedback" class="level2">
 <h2 class="anchored" data-anchor-id="shiny-app-feedback">Shiny App Feedback</h2>
 <p>This application was authored and is maintained by Eli Felts. Send bug reports and feature requests to eli_felts@fws.gov.</p>
 </section>
+<section id="citation" class="level2">
+<h2 class="anchored" data-anchor-id="citation">Citation</h2>
+<p>When citing hatchR please use our Fisheries manuscript <span class="citation" data-cites="sparks2025">(<a href="#ref-sparks2025" role="doc-biblioref">Sparks et al. 2025</a>)</span>:</p>
 
-</main>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-sparks2025" class="csl-entry" role="listitem">
+Sparks, M. M., B. M. Maitland, E. A. Felts, A. G. Swartz, and P. N. Frater. 2025. <a href="https://doi.org/10.1093/fshmag/vuaf078">hatchR: A toolset to predict when fish hatch and emerge</a>. Fisheries. vuaf078.
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
