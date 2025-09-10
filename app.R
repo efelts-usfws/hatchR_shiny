@@ -33,7 +33,7 @@ conflicts_prefer(DT::renderDT,
                  dplyr::lag)
 
 # Bring in the example crooked river data set
-# 
+#
 # crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
 
 
@@ -125,18 +125,23 @@ ui <- page_navbar(
                                        # Reactive UI element for users to identify which column
                                        # their date data are in
                                        
-                                       uiOutput("date_column"),
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        uiOutput("date_column")),
                                        
                                        # Reactive UI element for users to identify which column
-                                       # their date data are in
+                                       # their temp data are in
                                        
-                                       uiOutput("temp_column"),
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        uiOutput("temp_column")),
                                        
-                                       selectInput("date.format","Date Format",
-                                                   choices=c("2000-01-01T00:00:00Z",
-                                                             "1/1/2000",
-                                                             "2000-01-01"),
-                                                   selected="1/1/2000"),
+                                       # allow users to indicate which format data data are in
+                                       
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        selectInput("date.format","Date Format",
+                                                                    choices=c("2000-01-01T00:00:00Z",
+                                                                              "1/1/2000",
+                                                                              "2000-01-01"),
+                                                                    selected="1/1/2000")),
                                        
                                      )
                                      )),
@@ -779,7 +784,7 @@ server <- function(input,output,session){
       unlist()
     
     summary2 <- model_output %>%
-      map("dev.period") %>%
+      map("dev_period") %>%
       bind_rows()
     
     summary3 <- model_output %>%
