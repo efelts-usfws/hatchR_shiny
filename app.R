@@ -709,7 +709,7 @@ server <- function(input,output,session){
     user_dat <- data_reactive()
     
     airDatepickerInput(inputId = "spawn_date",
-                       label="Choose Date(s) of Phenological Event",
+                       label="Choose Date(s) of Observed Event",
                        value=NULL,
                        multiple = T,
                        clearButton = T,
@@ -1007,6 +1007,17 @@ server <- function(input,output,session){
   
   reactive_plot <- reactive({
     
+    model_output <- eval_reactive()
+    
+    summary3 <- model_output %>%
+      map("model_specs") %>%
+      bind_rows()
+    
+    dev.types <- summary3 %>%
+      distinct(development_type) %>%
+      pull(development_type)
+    
+    
     # get starting df of model outputs
     
     plot_dat <- summary_reactive()
@@ -1056,6 +1067,25 @@ server <- function(input,output,session){
              emerge_date2=replace_na(emerge_date2,"NA"),
              days_to_emerge2=replace_na(days_to_emerge2,"NA"))
     
+    phen.period2 <-  plot.join2 %>%
+      mutate(start=lag(when),
+             end=when) %>%
+      filter(what=="emerge_date") %>%
+      mutate(phase="Development") %>%
+      left_join(plot.join1,by=c("model_run","days_to_hatch",
+                                "days_to_emerge")) |>  
+      mutate(start=spawn_date,
+             end=emerge_date) %>%
+      mutate(spawn_date2=as.character(spawn_date),
+             hatch_date2=as.character(hatch_date),
+             days_to_hatch2=as.character(days_to_hatch),
+             emerge_date2=as.character(emerge_date),
+             days_to_emerge2=as.character(days_to_emerge)) %>%
+      mutate(hatch_date2=replace_na(hatch_date2,"NA"),
+             days_to_hatch2=replace_na(days_to_hatch2,"NA"),
+             emerge_date2=replace_na(emerge_date2,"NA"),
+             days_to_emerge2=replace_na(days_to_emerge2,"NA"))
+    
     phen_by.limits <- phen.period %>%
       group_by(brood_year) %>%
       summarize(earliest=min(spawn_date)-days(5),
@@ -1068,7 +1098,9 @@ server <- function(input,output,session){
     temp.limited <- temp.plot %>%
       inner_join(phen_by.limits,by="date")
     
+
     
+    if (setequal(dev.types, c("hatch","emerge")) || identical(dev.types,"hatch")){
     
     plot_output <- ggplot() +
       geom_segment(data=phen.period,
@@ -1091,6 +1123,34 @@ server <- function(input,output,session){
                  ncol=1)+
       labs(x="Date",y="Temperature (C)",
            color="")
+    
+    }
+    
+    else if (dev.types=="emerge"){
+      
+      plot_output <- ggplot() +
+        geom_segment(data=phen.period2,
+                     aes(x=start,y=model_run,
+                         xend=end,yend=model_run,
+                         text=str_c(" Spawn Date: ",spawn_date2,
+                                    "<br>","Hatch Date:",hatch_date2,
+                                    "<br>","Days to Hatch:",days_to_hatch2,
+                                    "<br>","Emerge Date:",emerge_date2,
+                                    "<br>","Days to Emerge:",days_to_emerge2,sep=" "),
+                         color=phase),linewidth=2)+
+        geom_line(data=temp.limited,
+                  aes(x=date,y=daily_temp,group=group,
+                      text=str_c(" Date:",date,
+                                 "<br>","Temperature:",round(daily_temp,1),sep=" ")))+
+        scale_color_manual(values=c("blue",
+                                    "red"))+
+        theme_bw()+
+        facet_wrap(~brood_year,scales="free_x",
+                   ncol=1)+
+        labs(x="Date",y="Temperature (C)",
+             color="")
+      
+    }
 
   })
   
