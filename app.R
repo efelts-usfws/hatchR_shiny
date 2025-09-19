@@ -152,6 +152,15 @@ ui <- page_navbar(
                                        
                                        "Model Specifications",
                                        
+                                       # option to select whether to predict early life history
+                                       # or spawn
+                                       
+                                       radioButtons(inputId = "phenology_type",
+                                                    label="Choose which phase to predict",
+                                                    choices=c("Hatch/Emerge",
+                                                              "Spawn"),
+                                                    selected="Hatch/Emerge"),
+                                       
                                        # Option to select whether to use existing or custom models
                                        
                                        radioButtons(inputId="model_build",
@@ -198,6 +207,15 @@ ui <- page_navbar(
                                        # their days to end data are in
                                        
                                        uiOutput("custom_days_column"),
+                                       
+                                       # Reactive UI element for users to identify the 
+                                       # development stage they've observed; if they 
+                                       # indicate they will be predicting hatch/emerge
+                                       # the only option will be Spawn; if they indicate
+                                       # they want to predict Spawn, they will be able
+                                       # to select hatch or emerge.
+                                       
+                                       uiOutput("obs_stage"),
                                        
                                        # Menu to select spawn date; this menu
                                        # populates based on the date range
@@ -419,7 +437,7 @@ server <- function(input,output,session){
     
   })
   
-  # make and object that checks for missing dates reactively
+  # make an object that checks for missing dates reactively
   
   
   missing_reactive <- reactive({
@@ -657,6 +675,32 @@ server <- function(input,output,session){
     
   })
   
+  # Make select UI for observed stage that
+  # reacts to user input of which phase they
+  # want to predict
+  
+  output$obs_stage <- renderUI({
+    
+    req(input$phenology_type)
+    
+    choices <- switch(input$phenology_type,
+                      "Hatch/Emerge"="Spawn",
+                      "Spawn"=c("Hatch","Emerge"),
+                      character(0))
+    
+    selected_default <- switch(input$phenology_type,
+                               "Hatch/Emerge"="Spawn",
+                               "Spawn"="Emerge",
+                               character(0))
+    
+    selectInput("phenology_stage",
+                "Observed Phenology Stage",
+                choices=choices,
+                selected = selected_default)
+      
+    
+  })
+  
   # Construct the spawn date select UI that
   # reacts to the user input csv
   
@@ -665,7 +709,7 @@ server <- function(input,output,session){
     user_dat <- data_reactive()
     
     airDatepickerInput(inputId = "spawn_date",
-                       label="Choose Spawn Date(s)",
+                       label="Choose Date(s) of Phenological Event",
                        value=NULL,
                        multiple = T,
                        clearButton = T,
