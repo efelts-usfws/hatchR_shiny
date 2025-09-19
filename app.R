@@ -793,8 +793,20 @@ server <- function(input,output,session){
   eval_reactive <- reactive({
     
     req(input$spawn_date)
+    req(input$phenology_type)
+    req(input$phenology_stage)
     
-    selected_models <- model_reactive()
+    modeled_stages <- if(input$phenology_type=="Hatch/Emerge"){
+      c("emerge","hatch")
+    } else if (input$phenology_type == "Spawn"){
+      str_to_lower(input$phenology_stage)
+    } else{
+      character(0)
+    }
+    
+    
+    
+    selected_models <- keep(model_reactive(), ~ .x$development_type %in% modeled_stages)
     model.dat <- data_reactive()
     spawn.date_value <- as.character(input$spawn_date)
     
