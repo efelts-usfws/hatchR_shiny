@@ -817,14 +817,31 @@ server <- function(input,output,session){
     var_grid <- expand_grid(model=selected_models,
                             spawn.date=spawn.date_value)
     
+    var_grid2 <- expand_grid(model=selected_models,
+                             develop.date=spawn.date_value)
+    
     # map the variable grid to the data using
     # the predict_phenology function
     
-    dat <- pmap(var_grid,
-                predict_phenology,
-                data=model.dat,
-                dates=date,
-                temperature=daily_temp)
+    if(input$phenology_type=="Hatch/Emerge"){
+    
+      pmap(var_grid,
+           predict_phenology,
+           data=model.dat,
+           dates=date,
+           temperature=daily_temp)
+    }
+    
+    else if (input$phenology_type=="Spawn"){
+      
+
+      pmap(var_grid2,
+           predict_spawn,
+           data=model.dat,
+           dates=date,
+           temperature=daily_temp)
+      
+    }
     
   })
   
