@@ -155,7 +155,7 @@ ui <- page_navbar(
                                        # option to select whether to predict early life history
                                        # or spawn
                                        
-                                       radioButtons(inputId = "phenology_type",
+                                       selectInput(inputId = "phenology_type",
                                                     label="Choose which phase to predict",
                                                     choices=c("Hatch/Emerge",
                                                               "Spawn"),
@@ -163,7 +163,7 @@ ui <- page_navbar(
                                        
                                        # Option to select whether to use existing or custom models
                                        
-                                       radioButtons(inputId="model_build",
+                                       selectInput(inputId="model_build",
                                                     label="Choose existing or custom model",
                                                     choices=c("Existing",
                                                               "Custom"),
