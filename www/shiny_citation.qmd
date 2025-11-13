@@ -32,4 +32,4 @@ This application was authored and is maintained by Eli Felts. Send bug reports a
 
 ## Citation
 
-When citing hatchR please use our Fisheries manuscript [@sparks2025]:
+When citing hatchR please use our Fisheries manuscript [@sparks2025]:xvb
