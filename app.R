@@ -33,7 +33,7 @@ conflicts_prefer(DT::renderDT,
                  dplyr::lag)
 
 # Bring in the example crooked river data set
-# 
+#
 # crooked.dat <- read_csv("data-raw/crooked_river_missing.csv")
 
 
@@ -125,18 +125,23 @@ ui <- page_navbar(
                                        # Reactive UI element for users to identify which column
                                        # their date data are in
                                        
-                                       uiOutput("date_column"),
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        uiOutput("date_column")),
                                        
                                        # Reactive UI element for users to identify which column
-                                       # their date data are in
+                                       # their temp data are in
                                        
-                                       uiOutput("temp_column"),
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        uiOutput("temp_column")),
                                        
-                                       selectInput("date.format","Date Format",
-                                                   choices=c("2000-01-01T00:00:00Z",
-                                                             "1/1/2000",
-                                                             "2000-01-01"),
-                                                   selected="1/1/2000"),
+                                       # allow users to indicate which format data data are in
+                                       
+                                       conditionalPanel(condition="input.demo_check == false",
+                                                        selectInput("date.format","Date Format",
+                                                                    choices=c("2000-01-01T00:00:00Z",
+                                                                              "1/1/2000",
+                                                                              "2000-01-01"),
+                                                                    selected="1/1/2000")),
                                        
                                      )
                                      )),
@@ -147,9 +152,18 @@ ui <- page_navbar(
                                        
                                        "Model Specifications",
                                        
+                                       # option to select whether to predict early life history
+                                       # or spawn
+                                       
+                                       selectInput(inputId = "phenology_type",
+                                                    label="Choose which phase to predict",
+                                                    choices=c("Hatch/Emerge",
+                                                              "Spawn"),
+                                                    selected="Hatch/Emerge"),
+                                       
                                        # Option to select whether to use existing or custom models
                                        
-                                       radioButtons(inputId="model_build",
+                                       selectInput(inputId="model_build",
                                                     label="Choose existing or custom model",
                                                     choices=c("Existing",
                                                               "Custom"),
@@ -193,6 +207,15 @@ ui <- page_navbar(
                                        # their days to end data are in
                                        
                                        uiOutput("custom_days_column"),
+                                       
+                                       # Reactive UI element for users to identify the 
+                                       # development stage they've observed; if they 
+                                       # indicate they will be predicting hatch/emerge
+                                       # the only option will be Spawn; if they indicate
+                                       # they want to predict Spawn, they will be able
+                                       # to select hatch or emerge.
+                                       
+                                       uiOutput("obs_stage"),
                                        
                                        # Menu to select spawn date; this menu
                                        # populates based on the date range
@@ -414,7 +437,7 @@ server <- function(input,output,session){
     
   })
   
-  # make and object that checks for missing dates reactively
+  # make an object that checks for missing dates reactively
   
   
   missing_reactive <- reactive({
@@ -652,6 +675,32 @@ server <- function(input,output,session){
     
   })
   
+  # Make select UI for observed stage that
+  # reacts to user input of which phase they
+  # want to predict
+  
+  output$obs_stage <- renderUI({
+    
+    req(input$phenology_type)
+    
+    choices <- switch(input$phenology_type,
+                      "Hatch/Emerge"="Spawn",
+                      "Spawn"=c("Hatch","Emerge"),
+                      character(0))
+    
+    selected_default <- switch(input$phenology_type,
+                               "Hatch/Emerge"="Spawn",
+                               "Spawn"="Emerge",
+                               character(0))
+    
+    selectInput("phenology_stage",
+                "Observed Phenology Stage",
+                choices=choices,
+                selected = selected_default)
+      
+    
+  })
+  
   # Construct the spawn date select UI that
   # reacts to the user input csv
   
@@ -660,7 +709,7 @@ server <- function(input,output,session){
     user_dat <- data_reactive()
     
     airDatepickerInput(inputId = "spawn_date",
-                       label="Choose Spawn Date(s)",
+                       label="Choose Date(s) of Observed Event",
                        value=NULL,
                        multiple = T,
                        clearButton = T,
@@ -744,8 +793,20 @@ server <- function(input,output,session){
   eval_reactive <- reactive({
     
     req(input$spawn_date)
+    req(input$phenology_type)
+    req(input$phenology_stage)
     
-    selected_models <- model_reactive()
+    modeled_stages <- if(input$phenology_type=="Hatch/Emerge"){
+      c("emerge","hatch")
+    } else if (input$phenology_type == "Spawn"){
+      str_to_lower(input$phenology_stage)
+    } else{
+      character(0)
+    }
+    
+    
+    
+    selected_models <- keep(model_reactive(), ~ .x$development_type %in% modeled_stages)
     model.dat <- data_reactive()
     spawn.date_value <- as.character(input$spawn_date)
     
@@ -756,14 +817,31 @@ server <- function(input,output,session){
     var_grid <- expand_grid(model=selected_models,
                             spawn.date=spawn.date_value)
     
+    var_grid2 <- expand_grid(model=selected_models,
+                             develop.date=spawn.date_value)
+    
     # map the variable grid to the data using
     # the predict_phenology function
     
-    dat <- pmap(var_grid,
-                predict_phenology,
-                data=model.dat,
-                dates=date,
-                temperature=daily_temp)
+    if(input$phenology_type=="Hatch/Emerge"){
+    
+      pmap(var_grid,
+           predict_phenology,
+           data=model.dat,
+           dates=date,
+           temperature=daily_temp)
+    }
+    
+    else if (input$phenology_type=="Spawn"){
+      
+
+      pmap(var_grid2,
+           predict_spawn,
+           data=model.dat,
+           dates=date,
+           temperature=daily_temp)
+      
+    }
     
   })
   
@@ -779,7 +857,7 @@ server <- function(input,output,session){
       unlist()
     
     summary2 <- model_output %>%
-      map("dev.period") %>%
+      map("dev_period") %>%
       bind_rows()
     
     summary3 <- model_output %>%
@@ -929,6 +1007,17 @@ server <- function(input,output,session){
   
   reactive_plot <- reactive({
     
+    model_output <- eval_reactive()
+    
+    summary3 <- model_output %>%
+      map("model_specs") %>%
+      bind_rows()
+    
+    dev.types <- summary3 %>%
+      distinct(development_type) %>%
+      pull(development_type)
+    
+    
     # get starting df of model outputs
     
     plot_dat <- summary_reactive()
@@ -978,6 +1067,25 @@ server <- function(input,output,session){
              emerge_date2=replace_na(emerge_date2,"NA"),
              days_to_emerge2=replace_na(days_to_emerge2,"NA"))
     
+    phen.period2 <-  plot.join2 %>%
+      mutate(start=lag(when),
+             end=when) %>%
+      filter(what=="emerge_date") %>%
+      mutate(phase="Development") %>%
+      left_join(plot.join1,by=c("model_run","days_to_hatch",
+                                "days_to_emerge")) |>  
+      mutate(start=spawn_date,
+             end=emerge_date) %>%
+      mutate(spawn_date2=as.character(spawn_date),
+             hatch_date2=as.character(hatch_date),
+             days_to_hatch2=as.character(days_to_hatch),
+             emerge_date2=as.character(emerge_date),
+             days_to_emerge2=as.character(days_to_emerge)) %>%
+      mutate(hatch_date2=replace_na(hatch_date2,"NA"),
+             days_to_hatch2=replace_na(days_to_hatch2,"NA"),
+             emerge_date2=replace_na(emerge_date2,"NA"),
+             days_to_emerge2=replace_na(days_to_emerge2,"NA"))
+    
     phen_by.limits <- phen.period %>%
       group_by(brood_year) %>%
       summarize(earliest=min(spawn_date)-days(5),
@@ -990,7 +1098,9 @@ server <- function(input,output,session){
     temp.limited <- temp.plot %>%
       inner_join(phen_by.limits,by="date")
     
+
     
+    if (setequal(dev.types, c("hatch","emerge")) || identical(dev.types,"hatch")){
     
     plot_output <- ggplot() +
       geom_segment(data=phen.period,
@@ -1013,6 +1123,34 @@ server <- function(input,output,session){
                  ncol=1)+
       labs(x="Date",y="Temperature (C)",
            color="")
+    
+    }
+    
+    else if (dev.types=="emerge"){
+      
+      plot_output <- ggplot() +
+        geom_segment(data=phen.period2,
+                     aes(x=start,y=model_run,
+                         xend=end,yend=model_run,
+                         text=str_c(" Spawn Date: ",spawn_date2,
+                                    "<br>","Hatch Date:",hatch_date2,
+                                    "<br>","Days to Hatch:",days_to_hatch2,
+                                    "<br>","Emerge Date:",emerge_date2,
+                                    "<br>","Days to Emerge:",days_to_emerge2,sep=" "),
+                         color=phase),linewidth=2)+
+        geom_line(data=temp.limited,
+                  aes(x=date,y=daily_temp,group=group,
+                      text=str_c(" Date:",date,
+                                 "<br>","Temperature:",round(daily_temp,1),sep=" ")))+
+        scale_color_manual(values=c("blue",
+                                    "red"))+
+        theme_bw()+
+        facet_wrap(~brood_year,scales="free_x",
+                   ncol=1)+
+        labs(x="Date",y="Temperature (C)",
+             color="")
+      
+    }
 
   })
   
