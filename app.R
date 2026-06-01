@@ -106,16 +106,35 @@ ui <- page_navbar(
                                        
                                        "Input Data",
                                        
-                                       # create a checkbox to be able to use example
-                                       # data sets for demonstration purposes
+                                       # # create a checkbox to be able to use example
+                                       # # data sets for demonstration purposes
+                                       # 
+                                       # checkboxInput("demo_check","Check box to use Crooked River example data",
+                                       #               value=FALSE),
+                                       # 
+                                       # # create a checkbox to be able to use 
+                                       # # Siegel dataset predicted temps when
+                                       # # empirical data are not available
+                                       # 
+                                       # checkboxInput("siegel_check","Check box to use predicted temperature
+                                       #               data",
+                                       #               value=F),
                                        
-                                       checkboxInput("demo_check","Check box to use Crooked River example data",
-                                                     value=FALSE),
+                                       # create options for which data source to use in the models
+                                       
+                                       radioButtons("data_source", "Data Source",
+                                                    choices = c(
+                                                      "Upload my own data"        = "upload",
+                                                      "Use Crooked River example" = "demo",
+                                                      "Use predicted temperature data" = "siegel"
+                                                    ),
+                                                    selected = "upload"
+                                       ),
                                        
                                        # Create a place for user to input temp data in csv file
                                        
                                        conditionalPanel(
-                                         condition="input.demo_check == false",
+                                         condition="input.data_source === 'upload'",
                                          
                                          fileInput("upload","Upload daily temperature data",
                                                    accept = ".csv")
@@ -125,18 +144,18 @@ ui <- page_navbar(
                                        # Reactive UI element for users to identify which column
                                        # their date data are in
                                        
-                                       conditionalPanel(condition="input.demo_check == false",
+                                       conditionalPanel(condition="input.data_source === 'upload'",
                                                         uiOutput("date_column")),
                                        
                                        # Reactive UI element for users to identify which column
                                        # their temp data are in
                                        
-                                       conditionalPanel(condition="input.demo_check == false",
+                                       conditionalPanel(condition="input.data_source === 'upload'",
                                                         uiOutput("temp_column")),
                                        
                                        # allow users to indicate which format data data are in
                                        
-                                       conditionalPanel(condition="input.demo_check == false",
+                                       conditionalPanel(condition="input.data_source === 'upload'",
                                                         selectInput("date.format","Date Format",
                                                                     choices=c("2000-01-01T00:00:00Z",
                                                                               "1/1/2000",
@@ -353,14 +372,14 @@ server <- function(input,output,session){
     
     ext <- tools::file_ext(file$datapath)
     
-    if(input$demo_check==FALSE){
+    if(input$data_source=="upload"){
       req(input$date.column)
       req(input$temp.column)
       req(input$upload)
     }
     
     if(input$date.format == "2000-01-01T00:00:00Z"&&
-       input$demo_check==FALSE)
+       input$data_source=="upload")
       
       return(
         
@@ -376,7 +395,7 @@ server <- function(input,output,session){
       )
     
     if(input$date.format == "1/1/2000"&&
-       input$demo_check==FALSE)
+       input$data_source=="upload")
       
       return(
         
@@ -391,7 +410,7 @@ server <- function(input,output,session){
       )
     
     if(input$date.format == "2000-01-01"&&
-       input$demo_check==FALSE)
+       input$data_source=="upload")
       
       return(
         
@@ -407,7 +426,7 @@ server <- function(input,output,session){
       )
     
     
-    if(input$demo_check==TRUE)
+    if(input$data_source=="demo")
       
       return(
         
