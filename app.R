@@ -26,7 +26,10 @@ library(conflicted)
 library(plotly)
 library(hatchR)
 library(RefManageR)
-
+library(leaflet)
+library(leaflet.extras)
+library(leaflet.extras2)
+library(leafem)
 
 conflicts_prefer(DT::renderDT,
                  dplyr::filter,
@@ -81,6 +84,21 @@ link_citation <- tags$a(shiny::icon("link"),"hatchR Citation",href = "https://bm
 # read in the bibtex object that mirrors the DOI entry
 
 hatchr_bib <- ReadBib("hatchr.bib")
+
+# make base leaflet map
+
+leaflet_base <- leaflet() %>%
+  addProviderTiles(providers$Esri.WorldTopoMap, group = "Topographic") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group = "Roads") %>%
+  setView(lng = -114.27979, lat = 45.02695, zoom = 6) %>%
+  addMouseCoordinates() %>%
+  addResetMapButton() |>
+  addLayersControl(
+    baseGroups = c("Topographic", "Imagery", "Roads"),
+    options = layersControlOptions(collapsed = FALSE),
+    position = "bottomright"
+  )
 
 # make the UI
 
@@ -161,6 +179,58 @@ ui <- page_navbar(
                                                                               "1/1/2000",
                                                                               "2000-01-01"),
                                                                     selected="1/1/2000")),
+                                       
+                                       conditionalPanel(condition="input.data_source === 'siegel'",
+                                                        "Primary Location & Stream Selection",
+                                                        p(
+                                                          class = "text-muted",
+                                                          "Choose project coordinates by clicking the map or entering them manually."
+                                                        ),
+                                                        layout_columns(
+                                                          col_widths = c(6,6),
+                                                          radioButtons(
+                                                            "coord_mode",
+                                                            "Coordinate entry method",
+                                                            choices = c(
+                                                              "Click on map" = "map",
+                                                              "Manual entry" = "manual"
+                                                            ),
+                                                            selected = "map"
+                                                          ),
+                                                          div(
+                                                            strong("Selected coordinates"),
+                                                            verbatimTextOutput("coord_text")
+                                                          )),
+                                                        conditionalPanel(
+                                                          condition = "input.coord_mode == 'manual'",
+                                                          layout_columns(
+                                                            col_widths = c(6, 6),
+                                                            numericInput(
+                                                              "manual_lat",
+                                                              "Latitude",
+                                                              value = NA,
+                                                              min = -90,
+                                                              max = 90,
+                                                              step = 0.000001
+                                                            )
+                                                          ),
+                                                          numericInput(
+                                                            "manual_lng",
+                                                            "Longitude",
+                                                            value = NA,
+                                                            min = -180,
+                                                            max = 180,
+                                                            step = 0.000001
+                                                          ),
+                                                          actionButton("use_manual_coords", "Use manual coordinates")
+                                                        ),
+                                                        layout_columns(
+                                                          col_widths = c(6, 6),
+                                                          actionButton("clear_point", "Clear point"),
+                                                          div()
+                                                        ),
+                                                        uiOutput("stream_selection_ui")
+                                                        )
                                        
                                      )
                                      )),
@@ -270,6 +340,17 @@ ui <- page_navbar(
               
               card(card_header("Missing Dates"),
                    DTOutput("missing_dates")),
+              
+             
+              conditionalPanel(
+                condition = "input.data_source === 'siegel'",
+                card(
+                  card_header("Select Stream Location (COMID)"),
+                  leaflet::leafletOutput("comid_map", height = 400),
+                  full_screen = T,
+                  verbatimTextOutput("selected_comid")
+                )
+              ),
               
               card(card_header("Plot Temperature Check"),
                    plotlyOutput("temp_plot"),
