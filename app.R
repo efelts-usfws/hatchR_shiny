@@ -30,6 +30,8 @@ library(leaflet)
 library(leaflet.extras)
 library(leaflet.extras2)
 library(leafem)
+library(shinyvalidate)
+library(sf)
 
 conflicts_prefer(DT::renderDT,
                  dplyr::filter,
@@ -87,6 +89,9 @@ hatchr_bib <- ReadBib("hatchr.bib")
 
 # make base leaflet map
 
+huc8.sf <- st_read("data-raw/hucs.gpkg",
+                   layer="huc8")
+
 leaflet_base <- leaflet() %>%
   addProviderTiles(providers$Esri.WorldTopoMap, group = "Topographic") %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
@@ -98,7 +103,10 @@ leaflet_base <- leaflet() %>%
     baseGroups = c("Topographic", "Imagery", "Roads"),
     options = layersControlOptions(collapsed = FALSE),
     position = "bottomright"
-  )
+  ) |>
+  addPolygons(data=huc8.sf,
+              layerId = ~huc8,
+              group="huc8")
 
 # make the UI
 
@@ -524,6 +532,23 @@ server <- function(input,output,session){
     
     
   })
+  
+  # initial map for selecting from siegel data set
+  
+  output$comid_map <- renderLeaflet({
+    
+    leaflet_base
+    
+  })
+  
+  # observer to track map click on the map
+
+  observeEvent(input$map_shape_click, {
+    click <- input$map_shape_click
+    req(click)
+    selected_huc8(click$id)
+  })
+  
   
   # return the user provided csv file in a DataTable output
   
