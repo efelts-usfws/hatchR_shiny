@@ -3,7 +3,10 @@
 
 required_packages <- c("tidyverse","shiny","bslib","DT",
                        "shinyWidgets","conflicted","plotly",
-                       "hatchR","RefManageR")
+                       "hatchR","RefManageR","leaflet",
+                       "leaflet.extras","leaflet.extras2",
+                       "leafem","shinyvalidate","htmltools",
+                       "sf","arrow")
 
 installed_packages <- rownames(installed.packages())
 
@@ -356,15 +359,18 @@ ui <- page_navbar(
             
             layout_columns(
               
-              col_widths=c(6,6,12),
+              col_widths=c(6,6,6,6),
               
               card(card_header("Input Data"),
                    DTOutput("user.dat")),
               
               card(card_header("Missing Dates"),
                    DTOutput("missing_dates")),
-              
              
+              card(card_header("Plot Temperature Check"),
+                   plotlyOutput("temp_plot"),
+                   full_screen = TRUE),
+              
               conditionalPanel(
                 condition = "input.data_source === 'siegel'",
                 card(
@@ -373,11 +379,7 @@ ui <- page_navbar(
                   full_screen = T,
                   verbatimTextOutput("selected_comid")
                 )
-              ),
-              
-              card(card_header("Plot Temperature Check"),
-                   plotlyOutput("temp_plot"),
-                   full_screen = TRUE)
+              )
               
             )
             
