@@ -583,15 +583,24 @@ server <- function(input,output,session){
     huc8_val <- as.numeric(selected_huc8())
     comid_val <- as.numeric(selected_flowline_id())
 
-    temp_ds |>
+    one_year <- temp_ds |>
       filter(
         huc8 == huc8_val,
         COMID == comid_val
       ) |>
-      collect() |> 
-      mutate(date=as.Date(doy - 1, origin = "1976-01-01")) |> 
-      select(date, daily_temp=mean_temp)
-
+      collect() |>
+      transmute(
+        doy,
+        daily_temp = mean_temp
+      ) |>
+      filter(doy <= 365)
+    
+    bind_rows(
+      one_year |> mutate(date = as.Date(doy - 1, origin = "1977-01-01")),
+      one_year |> mutate(date = as.Date(doy - 1, origin = "1978-01-01"))
+    ) |>
+      arrange(date) |>
+      select(date, daily_temp)
   })
   
   # output$selected_comid <- renderPrint({
