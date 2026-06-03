@@ -31,7 +31,9 @@ library(leaflet.extras)
 library(leaflet.extras2)
 library(leafem)
 library(shinyvalidate)
+library(htmltools)
 library(sf)
+library(arrow)
 
 conflicts_prefer(DT::renderDT,
                  dplyr::filter,
@@ -105,8 +107,21 @@ leaflet_base <- leaflet() %>%
     position = "bottomright"
   ) |>
   addPolygons(data=huc8.sf,
+              label = lapply(paste0("<b>HUC8 Name:</b> ", huc8.sf$name,
+                                    "<br>",
+                                    "<b>HUC8: </b>", huc8.sf$huc8), htmltools::HTML),
               layerId = ~huc8,
               group="huc8")
+
+# open connection to the Siegel data set
+
+temp_ds <- open_dataset("data-raw/siegel_parquet/")
+
+
+test_temp <- temp_ds |> 
+  filter(huc8 == 17050111,
+         COMID==23377156) |> 
+  collect()# |> 
 
 # make the UI
 
@@ -414,6 +429,10 @@ ui <- page_navbar(
 
 server <- function(input,output,session){
 
+  ### Options to progress through if using 
+  ### provided data from something like temp loggers
+  
+  
   # Make a reactive selectInput for identifying the date column
   
   output$date_column <- renderUI({
@@ -451,6 +470,154 @@ server <- function(input,output,session){
     
     
   })
+  
+  ### Options to progress through if using Siegel
+  ### predicted temp data
+  
+  
+  # initial map for selecting from siegel data set
+  
+  output$comid_map <- renderLeaflet({
+    
+    leaflet_base
+    
+  })
+  
+  # reactive val at top of server
+  
+  selected_huc8 <- reactiveVal(NULL)
+  
+  # observer to track map click on the map
+  
+  observeEvent(input$comid_map_shape_click, {
+    click <- input$comid_map_shape_click
+    req(click)
+    
+    req(click$group == "huc8")
+    
+    selected_huc8(click$id)
+  })
+  
+  # observe selected_huc8 changing, query flowlines, update map
+  
+  observeEvent(selected_huc8(), {
+    req(selected_huc8())
+    
+    # query flowlines for selected huc8
+    selected_flowlines <- st_read(
+      "data-raw/flowlines.gpkg",
+      layer = "flowlines",
+      query = glue::glue("SELECT * FROM flowlines WHERE huc8 = '{selected_huc8()}'")
+    )
+    
+    leafletProxy("comid_map") |>
+      clearGroup("flowlines") |>  
+      clearGroup("huc8") |>
+      addPolygons(
+        data = huc8.sf,
+        layerId = ~huc8,
+        group = "huc8",
+        label = NULL
+      ) |> 
+      addPolylines(
+        data = selected_flowlines,
+        layerId = ~comid,
+        group = "flowlines",
+        color = "steelblue",
+        weight = 1.5,
+        opacity = 0.8,
+        label = ~lapply(paste0("<b>COMID:</b> ", comid,
+                               "</br><b>Stream Name:</b> ",gnis_name), htmltools::HTML)
+      )
+    
+  })
+  
+  selected_flowline_id <- reactiveVal(NULL)
+  
+  observeEvent(input$comid_map_shape_click, {
+    
+    click <- input$comid_map_shape_click
+    req(click$id)
+    
+    req(click$group == "flowlines")
+    
+    
+    selected_flowline_id(click$id)
+  })
+  
+  selected_flowline <- reactive({
+    req(selected_flowline_id())
+    
+    selected_flowlines <- st_read(
+      "data-raw/flowlines.gpkg",
+      layer = "flowlines",
+      query = glue::glue("SELECT * FROM flowlines WHERE huc8 = '{selected_huc8()}'")
+    ) |> 
+      filter(comid == selected_flowline_id())
+  })
+  
+  observe({
+    req(selected_flowline())
+    
+    leafletProxy("comid_map") |>
+      clearGroup("selected_flowline") |>
+      addPolylines(
+        data = selected_flowline(),
+        group = "selected_flowline",
+        label = ~ str_c(gnis_name),
+        weight = 5,
+        opacity = 1,
+        color = "red"
+      )
+  })
+
+
+  
+  
+  
+  selected_temp <- reactive({
+    req(input$data_source == "siegel")
+    req(selected_huc8())
+    req(selected_flowline_id())
+
+    huc8_val <- as.numeric(selected_huc8())
+    comid_val <- as.numeric(selected_flowline_id())
+
+    temp_ds |>
+      filter(
+        huc8 == huc8_val,
+        COMID == comid_val
+      ) |>
+      collect() |> 
+      mutate(date=as.Date(doy - 1, origin = "1976-01-01")) |> 
+      select(date, daily_temp=mean_temp)
+
+  })
+  
+  # output$selected_comid <- renderPrint({
+  #   req(selected_huc8())
+  #   req(selected_flowline_id())
+  #   req(selected_flowline())
+  #   req(selected_temp())
+  #   
+  #   flowline_dat <- selected_flowline()
+  #   temp_dat <- selected_temp()
+  #   
+  #   list(
+  #     selected_huc8_raw = selected_huc8(),
+  #     selected_huc8_numeric = as.numeric(selected_huc8()),
+  #     
+  #     selected_comid_raw = selected_flowline_id(),
+  #     selected_comid_numeric = as.numeric(selected_flowline_id()),
+  #     
+  #     selected_flowline_preview = st_drop_geometry(flowline_dat),
+  #     
+  #     selected_temp_rows = nrow(temp_dat),
+  #     selected_temp_columns = names(temp_dat),
+  #     selected_temp_preview = head(temp_dat)
+  #   )
+  # })
+  
   
   # make the user input data reactive, that way it will
   # go into everything else on the server side
@@ -530,23 +697,20 @@ server <- function(input,output,session){
         
       )
     
+    if(input$data_source=="siegel"){
+      req(selected_temp())
+    }
     
-  })
-  
-  # initial map for selecting from siegel data set
-  
-  output$comid_map <- renderLeaflet({
+    if(input$data_source=="siegel")
+      
+      
+      return(
+        
+        selected_temp()
+        
+      )
     
-    leaflet_base
     
-  })
-  
-  # observer to track map click on the map
-
-  observeEvent(input$map_shape_click, {
-    click <- input$map_shape_click
-    req(click)
-    selected_huc8(click$id)
   })
   
   
