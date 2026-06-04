@@ -493,6 +493,10 @@ server <- function(input,output,session){
     req(click$group == "huc8")
     
     selected_huc8(click$id)
+    selected_flowline_id(NULL)
+    
+    leafletProxy("comid_map") |>
+      clearGroup("selected_flowline")
   })
   
   # observe selected_huc8 changing, query flowlines, update map
