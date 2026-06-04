@@ -121,11 +121,6 @@ leaflet_base <- leaflet() %>%
 temp_ds <- open_dataset("data-raw/siegel_parquet/")
 
 
-test_temp <- temp_ds |> 
-  filter(huc8 == 17050111,
-         COMID==23377156) |> 
-  collect()# |> 
-
 # make the UI
 
 ui <- page_navbar(
