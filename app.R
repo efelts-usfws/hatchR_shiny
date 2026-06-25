@@ -205,35 +205,17 @@ ui <- page_navbar(
                                                         "Primary Location & Stream Selection",
                                                         p(
                                                           class = "text-muted",
-                                                          "Choose project coordinates by clicking the map or entering them manually."
+                                                          "Choose project COMID by clicking the map (enter a reference point below if needed)"
                                                         ),
                                                         layout_columns(
                                                           col_widths = c(6,6),
-                                                          radioButtons(
-                                                            "coord_mode",
-                                                            "Coordinate entry method",
-                                                            choices = c(
-                                                              "Click on map" = "map",
-                                                              "Manual entry" = "manual"
-                                                            ),
-                                                            selected = "map"
-                                                          ),
-                                                          div(
-                                                            strong("Selected coordinates"),
-                                                            verbatimTextOutput("coord_text")
-                                                          )),
-                                                        conditionalPanel(
-                                                          condition = "input.coord_mode == 'manual'",
-                                                          layout_columns(
-                                                            col_widths = c(6, 6),
-                                                            numericInput(
-                                                              "manual_lat",
-                                                              "Latitude",
-                                                              value = NA,
-                                                              min = -90,
-                                                              max = 90,
-                                                              step = 0.000001
-                                                            )
+                                                          numericInput(
+                                                            "manual_lat",
+                                                            "Latitude",
+                                                            value = NA,
+                                                            min = -90,
+                                                            max = 90,
+                                                            step = 0.000001
                                                           ),
                                                           numericInput(
                                                             "manual_lng",
@@ -242,15 +224,16 @@ ui <- page_navbar(
                                                             min = -180,
                                                             max = 180,
                                                             step = 0.000001
+                                                          )
                                                           ),
-                                                          actionButton("use_manual_coords", "Use manual coordinates")
-                                                        ),
                                                         layout_columns(
                                                           col_widths = c(6, 6),
+                                                          actionButton("add_waypoint", "Add reference point"),
                                                           actionButton("clear_point", "Clear point"),
                                                           div()
                                                         ),
-                                                        uiOutput("stream_selection_ui")
+                                                        uiOutput("stream_selection_ui"),
+                                                        uiOutput("selected_stream_info")
                                                         )
                                        
                                      )
@@ -525,7 +508,7 @@ server <- function(input,output,session){
         layerId = ~comid,
         group = "flowlines",
         color = "steelblue",
-        weight = 1.5,
+        weight = 3,
         opacity = 0.8,
         label = ~lapply(paste0("<b>COMID:</b> ", comid,
                                "</br><b>Stream Name:</b> ",gnis_name), htmltools::HTML)
@@ -571,7 +554,44 @@ server <- function(input,output,session){
         color = "red"
       )
   })
+  
+  observeEvent(input$add_waypoint, {
+    req(input$manual_lat, input$manual_lng)
+    
+    leafletProxy("comid_map") |>
+      clearGroup("waypoint") |>
+      addMarkers(
+        lng = input$manual_lng,
+        lat = input$manual_lat,
+        group = "waypoint",
+        options = markerOptions(zIndexOffset = 1000)
+      ) |>
+      setView(lng = input$manual_lng, lat = input$manual_lat, zoom = 10)
+  })
+  
 
+  output$selected_stream_info <- renderUI({
+    req(selected_flowline_id())
+    req(selected_flowline())
+    
+    flowline_dat <- sf::st_drop_geometry(selected_flowline())
+    
+    stream_name <- if (!is.na(flowline_dat$gnis_name) && nchar(flowline_dat$gnis_name) > 0) {
+      flowline_dat$gnis_name
+    } else {
+      "Unnamed stream"
+    }
+    
+    div(
+      style = "margin-top: 10px; padding: 8px; border-left: 3px solid steelblue; background-color: rgba(70,130,180,0.1);",
+      strong("Selected Stream:"),
+      br(),
+      tags$span(style = "color: steelblue;", stream_name),
+      br(),
+      strong("COMID: "),
+      tags$span(style = "font-family: monospace;", selected_flowline_id())
+    )
+  })
 
   
   
